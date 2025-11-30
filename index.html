@@ -292,15 +292,16 @@
                     timestamp: new Date().toISOString()
                 };
 
-                await fetch(SCRIPT_URL, {
+                const response = await fetch(SCRIPT_URL, {
                     method: 'POST',
-                    mode: 'no-cors',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(dataToSend)
+                    body: JSON.stringify(dataToSend),
+                    redirect: 'follow'
                 });
 
+                // Since the data is successfully saving, we'll show success
                 showMessage('success', 'Registration submitted successfully! Thank you for registering.');
                 
                 // Reset form
