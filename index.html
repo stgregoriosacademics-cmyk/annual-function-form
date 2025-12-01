@@ -294,32 +294,66 @@
 
                 console.log('Sending data:', dataToSend);
 
-                const response = await fetch(SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: {
-                        'Content-Type': 'text/plain',
-                    },
-                    body: JSON.stringify(dataToSend)
+                // Using an iframe approach to bypass CORS
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.name = 'hidden-form-iframe';
+                document.body.appendChild(iframe);
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = SCRIPT_URL;
+                form.target = 'hidden-form-iframe';
+
+                Object.keys(dataToSend).forEach(key => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    input.value = dataToSend[key];
+                    form.appendChild(input);
                 });
 
-                console.log('Response received');
-                showMessage('success', 'Registration submitted successfully! Thank you for registering.');
-                
-                // Reset form
-                document.getElementById('registrationForm').reset();
-                document.getElementById('section').disabled = true;
-                document.querySelectorAll('.item-checkbox').forEach(cb => {
-                    cb.closest('label').classList.remove('border-blue-500', 'bg-blue-50');
-                    cb.closest('label').classList.add('border-gray-200');
-                });
-                document.querySelectorAll('.bus-option').forEach(label => {
-                    label.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
-                    label.classList.add('border-gray-200');
-                });
+                document.body.appendChild(form);
+                form.submit();
+
+                // Assume success after a short delay
+                setTimeout(() => {
+                    showMessage('success', 'Registration submitted successfully! Thank you for registering.');
+                    
+                    // Reset form
+                    document.getElementById('studentName').value = '';
+                    document.getElementById('class').value = '';
+                    document.getElementById('section').value = '';
+                    document.getElementById('section').disabled = true;
+                    document.getElementById('contactNumber').value = '';
+                    document.getElementById('address').value = '';
+                    
+                    document.querySelectorAll('.item-checkbox').forEach(cb => {
+                        cb.checked = false;
+                        cb.closest('label').classList.remove('border-blue-500', 'bg-blue-50');
+                        cb.closest('label').classList.add('border-gray-200');
+                    });
+                    
+                    document.querySelectorAll('input[name="schoolBus"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                    
+                    document.querySelectorAll('.bus-option').forEach(label => {
+                        label.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
+                        label.classList.add('border-gray-200');
+                    });
+
+                    // Clean up
+                    document.body.removeChild(form);
+                    document.body.removeChild(iframe);
+                    
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = 'Submit Registration';
+                }, 1500);
+
             } catch (error) {
+                console.error('Error:', error);
                 showMessage('error', 'Failed to submit. Please try again or contact the administrator.');
-            } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Submit Registration';
             }
@@ -340,4 +374,3 @@
     </script>
 </body>
 </html>
-
