@@ -163,7 +163,7 @@
             <div class="mt-8 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <h3 class="font-semibold text-green-900 mb-2">✅ Connected to Google Sheets</h3>
                 <p class="text-sm text-green-800">
-                    This form is now connected and ready to collect data. All submissions will be automatically saved to your Google Sheet.
+                    This form is connected and ready. All submissions will be saved to your Google Sheet.
                 </p>
             </div>
         </div>
@@ -180,7 +180,7 @@
             '12': ['No Section']
         };
 
-        const SCRIPT_URL = 'https://script.google.com/u/0/home/projects/1ouWpxxQzbKSTgPa9PLT7BALlUm99ybmhJRdtjYaNrjISXsCYxeq2iAWN/edit';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytwGwOxdzKJ2cgT3SwGoMOJdUbQRo9AyFQLDIAaDwVNB7UPs51sexvnSLism6iuYfuow/exec';
 
         // Handle class selection
         document.getElementById('class').addEventListener('change', function() {
@@ -282,78 +282,64 @@
 
             try {
                 const dataToSend = {
-                    studentName,
+                    timestamp: new Date().toISOString(),
+                    studentName: studentName,
                     class: classValue,
-                    section,
+                    section: section,
                     items: selectedItems.join(', '),
-                    schoolBus,
-                    contactNumber,
-                    address,
-                    timestamp: new Date().toISOString()
+                    schoolBus: schoolBus,
+                    contactNumber: contactNumber,
+                    address: address
                 };
 
                 console.log('Sending data:', dataToSend);
 
-                // Using an iframe approach to bypass CORS
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.name = 'hidden-form-iframe';
-                document.body.appendChild(iframe);
+                // Create URL with parameters
+                const params = new URLSearchParams(dataToSend);
+                const urlWithParams = SCRIPT_URL + '?' + params.toString();
 
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = SCRIPT_URL;
-                form.target = 'hidden-form-iframe';
-
-                Object.keys(dataToSend).forEach(key => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    input.value = dataToSend[key];
-                    form.appendChild(input);
+                // Use fetch with redirect follow
+                const response = await fetch(urlWithParams, {
+                    method: 'GET',
+                    redirect: 'follow'
                 });
 
-                document.body.appendChild(form);
-                form.submit();
+                const result = await response.text();
+                console.log('Response:', result);
 
-                // Assume success after a short delay
-                setTimeout(() => {
+                if (result.includes('success') || result.includes('Form is working')) {
                     showMessage('success', 'Registration submitted successfully! Thank you for registering.');
-                    
-                    // Reset form
-                    document.getElementById('studentName').value = '';
-                    document.getElementById('class').value = '';
-                    document.getElementById('section').value = '';
-                    document.getElementById('section').disabled = true;
-                    document.getElementById('contactNumber').value = '';
-                    document.getElementById('address').value = '';
-                    
-                    document.querySelectorAll('.item-checkbox').forEach(cb => {
-                        cb.checked = false;
-                        cb.closest('label').classList.remove('border-blue-500', 'bg-blue-50');
-                        cb.closest('label').classList.add('border-gray-200');
-                    });
-                    
-                    document.querySelectorAll('input[name="schoolBus"]').forEach(radio => {
-                        radio.checked = false;
-                    });
-                    
-                    document.querySelectorAll('.bus-option').forEach(label => {
-                        label.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
-                        label.classList.add('border-gray-200');
-                    });
-
-                    // Clean up
-                    document.body.removeChild(form);
-                    document.body.removeChild(iframe);
-                    
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = 'Submit Registration';
-                }, 1500);
+                } else {
+                    throw new Error('Submission failed');
+                }
+                
+                // Reset form
+                document.getElementById('studentName').value = '';
+                document.getElementById('class').value = '';
+                document.getElementById('section').value = '';
+                document.getElementById('section').disabled = true;
+                document.getElementById('contactNumber').value = '';
+                document.getElementById('address').value = '';
+                
+                document.querySelectorAll('.item-checkbox').forEach(cb => {
+                    cb.checked = false;
+                    cb.closest('label').classList.remove('border-blue-500', 'bg-blue-50');
+                    cb.closest('label').classList.add('border-gray-200');
+                });
+                
+                document.querySelectorAll('input[name="schoolBus"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                
+                document.querySelectorAll('.bus-option').forEach(label => {
+                    label.classList.remove('border-green-500', 'bg-green-50', 'border-red-500', 'bg-red-50');
+                    label.classList.add('border-gray-200');
+                });
 
             } catch (error) {
                 console.error('Error:', error);
                 showMessage('error', 'Failed to submit. Please try again or contact the administrator.');
+            } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Submit Registration';
             }
@@ -374,4 +360,3 @@
     </script>
 </body>
 </html>
-
